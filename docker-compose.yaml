@@ -1,0 +1,57 @@
+services:
+  victoriametrics:
+    image: victoriametrics/victoria-metrics:latest
+    container_name: victoriametrics
+    networks: [telemetry-net]
+    ports: ["8428:8428"]
+    volumes: ["./vmdata:/victoria-metrics-data"]
+    command:
+      - "--storageDataPath=/victoria-metrics-data"
+      - "--retentionPeriod=30d"
+    restart: unless-stopped
+
+  vector:
+    image: timberio/vector:latest-alpine
+    container_name: vector
+    networks: [telemetry-net]
+    volumes:
+      - "./vector.yaml:/etc/vector/vector.yaml:ro"
+    depends_on: [victoriametrics]
+    restart: unless-stopped
+
+  anomaly-worker:
+    build: ./anomaly-worker
+    container_name: anomaly-worker
+    networks: [telemetry-net]
+    depends_on: [victoriametrics]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    networks: [telemetry-net]
+    ports: ["3000:3000"]
+    volumes: ["./grafana-data:/var/lib/grafana"]
+    depends_on: [victoriametrics]
+    restart: unless-stopped
+
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    container_name: npm
+    networks: [telemetry-net]
+    ports: ["80:80", "81:81", "443:443"]
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    networks: [telemetry-net]
+    command: docker run cloudflare/cloudflared:latest tunnel --no-autoupdate run --token eyJhIjoiYTRiYjBjMGU3YWFiYmY2OGM5MDRkNzdiZDQ5ZmM5NTkiLCJ0IjoiYzI4ZmJhMTAtZDU5NC00MWU5LWIzY2QtNGYzOTQyZTc4NTcxIiwicyI6Ik1EUmhNbVExTlRFdE9EaG1OeTAwTkRGakxUaGhaRFl0TmpnNU9ESmxOR0V5WW1RMSJ9
+    restart: unless-stopped
+
+networks:
+  telemetry-net:
+    driver: bridge

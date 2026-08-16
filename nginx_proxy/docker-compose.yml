@@ -1,0 +1,11 @@
+services:
+  npm:
+    image: jc21/nginx-proxy-manager:latest
+    networks: [telemetry-net]
+    ports: ["80:80", "81:81", "443:443"]
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+networks:
+  telemetry-net:
+    external: true

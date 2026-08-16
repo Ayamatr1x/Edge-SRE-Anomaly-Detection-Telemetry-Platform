@@ -1,0 +1,16 @@
+sources:
+  host_metrics:
+    type: host_metrics
+    collectors:
+      - cpu
+      - memory
+      - disk
+      - network
+      - load
+
+sinks:
+  victoriametrics:
+    type: prometheus_remote_write
+    inputs:
+      - host_metrics
+    endpoint: http://victoriametrics:8428/api/v1/write

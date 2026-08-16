@@ -1,0 +1,6 @@
+grafana-data/
+vmdata/
+npm/data/
+npm/letsencrypt/
+.env
+*.log
